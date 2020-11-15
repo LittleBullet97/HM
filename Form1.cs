@@ -215,6 +215,7 @@ namespace NM {
             }
             int temp = Int32.Parse(a) * Int32.Parse(b);
             textBox3.Text = temp.ToString();
+            textBox5.Text = temp.ToString();
        
         }
 
@@ -370,5 +371,23 @@ namespace NM {
             readXML();
 
         }
+
+        public void Training_Click (object sender, EventArgs e) {
+            int A, B, C;
+            double eta;
+            int br_epohi;
+            double[] data = new double[2];
+            A = textBox3.Text == "" ? A = 1: A = Int32.Parse(textBox3.Text);
+            B = textBox4.Text == "" ? B = 1: B = Int32.Parse(textBox4.Text);
+            C = textBox5.Text == "" ? C = 1: C = Int32.Parse(textBox5.Text); 
+            eta = textBox6.Text == "" ? eta = 0.1 : eta = Convert.ToDouble(textBox6.Text);
+            br_epohi = textBox7.Text == "" ? C = 100 : C = Int32.Parse(textBox7.Text); 
+            //Neural_Network nn = new Neural_Network(A,B,C,eta,br_epohi,data);
+
+
+            Neural_Network nn = new Neural_Network();
+
+        }
+
     }
 }
