@@ -167,6 +167,7 @@ namespace NM {
             for (int j = 0; j < B; j++) {
                 for (int i = 0; i < A; i++) {
                     Wkj[j, i] += delta_Wki[j, i];
+                    //shity :'(
                 }
             }
         }
