@@ -14,8 +14,8 @@ using System.Windows.Forms;
 using System.Xml;
 
 namespace NM {
-    public partial class Form1 : Form {
-        public Form1 () {
+    public partial class Multy : Form {
+        public Multy () {
             InitializeComponent();
         }
 
@@ -25,12 +25,10 @@ namespace NM {
             textBox7.Text = 100.ToString();
         }
 
-        Bitmap img;
-        Bitmap img_gray;
-        List<List<Bitmap>> pictures = new List<List<Bitmap>>();
-        string filename = @"C:\Users\Asus\Desktop\values.xml";
+        List<List<Bitmap>> pictures = new List<List<Bitmap>>();//3//35~40
+        string filename = @"D:\Desktop\values.xml";
         private void loadPictures () {
-            string[] all_folder_tranning = Directory.GetDirectories(@"C:\Users\Asus\Desktop\training");
+            string[] all_folder_tranning = Directory.GetDirectories(@"D:\Desktop\training");
             foreach (string folder_tranning in all_folder_tranning) {
                 string[] object_tranning = Directory.GetFiles(folder_tranning);
                 List<Bitmap> obj = new List<Bitmap>();
@@ -40,26 +38,7 @@ namespace NM {
                 pictures.Add(obj);
             }
         }
-        private void loadPicture_Click (object sender, EventArgs e) {
-            //img = new Bitmap("C:\\Users\\Asus\\Pictures\\background\\Wallpaper-Space.jpg");
-            img = new Bitmap(@"C:\Users\Asus\Desktop\img.jpg"); 
-            //img = new Bitmap (@"C:\Users\Asus\Desktop\us.png");
-            // img = resize(img, pictureBox1.Width, pictureBox1.Height);
-            pictureBox1.Image = img;
-            pictureBox1.Width = img.Width;
-            pictureBox1.Height = img.Height;
-            pictureBox2.Width = img.Width;
-            pictureBox2.Height = img.Height;
-            pictureBox3.Width = img.Width;
-            pictureBox3.Height = img.Height;
-            button2.Enabled = true;
-        }
-
-        private void transformToGray_Click (object sender, EventArgs e) {
-            img_gray = convertToGray(img);
-            pictureBox2.Image = img_gray;
-            singlePicture.Enabled = true;
-        }
+    
         private Bitmap resize (Bitmap img, int x, int y) {
             Bitmap result = new Bitmap(x, y);
             using (Graphics g = Graphics.FromImage(result)) {
@@ -79,10 +58,9 @@ namespace NM {
             return result;
         }
 
-        private List<int> AverageGray (Bitmap img, int count_rectX, int count_rectY,bool single_pic) {
+        private List<int> AverageGray (Bitmap img, int count_rectX, int count_rectY) {
             // list for every rect
             List<int>[] lists = new List<int>[count_rectX * count_rectY];
-
             List<int> result = new List<int>();
 
             //init list
@@ -93,12 +71,6 @@ namespace NM {
             int x1, y1;
             int rectX = img.Width / count_rectX;
             int rectY = img.Height / count_rectY;
-            
-            if (single_pic) {
-                img = resize(img, rectX * count_rectX, rectY * count_rectY);
-                pictureBox3.Width = rectX * count_rectX;
-                pictureBox3.Height = rectY * count_rectY;
-            }
 
             for (int x = 0; x < rectX * count_rectX; x++) {
                 for (int y = 0; y < rectY * count_rectY; y++) {
@@ -117,34 +89,11 @@ namespace NM {
                 for (int x = 0; x < count_rectX; x++) {
                     int loc = x + y * count_rectX;
                     double temp = Math.Round(lists[loc].Average());
-                   if(single_pic) richTextBox1.AppendText(temp.ToString() + "   ");
+                    richTextBox1.AppendText(temp.ToString() + "   ");
                     result.Add((int) temp);
                 }
-                if (single_pic) richTextBox1.AppendText("\n");
-
             }
-            if (single_pic) richTextBox1.AppendText("--------------------------\n");
             return result;
-
-        }
-
-        private void pixelization (List<int> value, Bitmap img, int count_rectX, int count_rectY) {// is used only with single pic, show the pic
-            Bitmap result = new Bitmap(img.Width, img.Height);
-            int x1, y1;
-            int rectX = img.Width / count_rectX;
-            int rectY = img.Height / count_rectY;
-            for (int x = 0; x < rectX * count_rectX; x++) {
-                for (int y = 0; y < rectY * count_rectY; y++) {
-                    x1 = x / rectX;
-                    y1 = y / rectY;
-                    int index = x1 + y1 * count_rectX;
-                    if (x >= x1 * rectX && x < x1 * rectX + rectX && y >= y1 * rectY && y < y1 * rectY + rectY) {
-                        result.SetPixel(x, y, Color.FromArgb(img.GetPixel(x, y).A, value[index], value[index], value[index]));
-                    }
-                }
-            }
-            
-            pictureBox3.Image = result;
         }
 
         private List<double> scaleAndShifting (List<int> avr_gray_value) {   
@@ -160,9 +109,7 @@ namespace NM {
 
             double new_min_value = scaled_gray.Min();
             double new_max_value = scaled_gray.Max();
-
             double shift = 0.1 - new_min_value;
-
 
             for (int i = 0; i < scaled_gray.Count; i++) {
                 scaled_gray[i] = avr_gray_value[i] * scale + shift;
@@ -171,31 +118,12 @@ namespace NM {
             return scaled_gray;
         }
 
-        private void fixXY (bool single_pic) { 
-
+        private void fixXY () { 
             int x = ( textBox1.Text == "" || textBox1.Text == "0" ) ? x = 3 : x = Int32.Parse(textBox1.Text);
-
             int y = ( textBox2.Text == "" || textBox2.Text == "0" ) ? y = 3 : y = Int32.Parse(textBox2.Text);
-            if (single_pic) {
-                x = x > img.Width ? x = img.Width : ( x < 1 ? x = 1 : x );
-                y = y > img.Height ? y = img.Height : ( y < 1 ? y = 1 : y );
-            }
             textBox1.Text = x.ToString();
             textBox2.Text = y.ToString();
-
         }
-
-        private void singlePicture_Click (object sender, EventArgs e) {
-            richTextBox1.Clear();
-            fixXY(true);
-            int x = Int32.Parse(textBox1.Text);
-            int y = Int32.Parse(textBox2.Text);
-            List<int> avr_gray_value = new List<int>();
-            avr_gray_value = AverageGray(img_gray, x, y,true);
-            pixelization(avr_gray_value, img_gray, x, y);
-        }
-      
- 
 
         private void textBox1_TextChanged (object sender, EventArgs e) {
             sumA();
@@ -228,7 +156,7 @@ namespace NM {
                 }
 
             }
-            fixXY(false);
+            fixXY();
             int x = Int32.Parse(textBox1.Text);
             int y = Int32.Parse(textBox2.Text);
             int max_folder_pic = pictures.Max(t => t.Count);
@@ -249,8 +177,8 @@ namespace NM {
             // adding all gray values for all pictures
             for (int folder = 0; folder < pictures.Count; folder++) {
                 for (int pic = 0; pic < pictures[folder].Count; pic++) {
-                    average_gray = AverageGray(pictures[folder][pic], x, y,false);
-                    for (int k = 0; k < average_gray.Count; k++) {//tuk
+                    average_gray = AverageGray(pictures[folder][pic], x, y);
+                    for (int k = 0; k < average_gray.Count; k++) {
                         all_gray_values[folder, pic].Add(average_gray[k]);
                     }
                 }
@@ -324,7 +252,6 @@ namespace NM {
             pic.Add(br_photos);
             xtr.Close();
             int maxpic = pic.Max();
-            MessageBox.Show(maxpic.ToString());
             double[,,] data = new double[folder, maxpic, val];
             for (int i = 0; i < folder; i++) {
                 for (int j = 0; j < pic[i]; j++) {
@@ -348,10 +275,7 @@ namespace NM {
                         p = 0;
                         f++;
                     }
-
-
                 }
-
             }
             for (int i = 0; i < folder; i++) {
                 for (int j = 0; j < pic[i]; j++) {
@@ -367,27 +291,87 @@ namespace NM {
 
         }
         private void loadValues_Click (object sender, EventArgs e) {
-
             readXML();
-
         }
 
+        Neural_Network nn;
         public void Training_Click (object sender, EventArgs e) {
             int A, B, C;
             double eta;
             int br_epohi;
-            double[] data = new double[2];
-            A = textBox3.Text == "" ? A = 1: A = Int32.Parse(textBox3.Text);
-            B = textBox4.Text == "" ? B = 1: B = Int32.Parse(textBox4.Text);
-            C = textBox5.Text == "" ? C = 1: C = Int32.Parse(textBox5.Text); 
+            double[,,] data = readXML();
+
+            int br_primeri = data.GetLength(1);
+            A = textBox3.Text == "" ? A = 9: A = Int32.Parse(textBox3.Text);
+            B = (int)Math.Round(Math.Sqrt(br_primeri) + 2);
+           
             eta = textBox6.Text == "" ? eta = 0.1 : eta = Convert.ToDouble(textBox6.Text);
-            br_epohi = textBox7.Text == "" ? C = 100 : C = Int32.Parse(textBox7.Text); 
-            //Neural_Network nn = new Neural_Network(A,B,C,eta,br_epohi,data);
+            br_epohi = textBox7.Text == "" ? br_epohi = 1000 : br_epohi = Int32.Parse(textBox7.Text);  
+
+            nn = new Neural_Network(A, B, 1, eta, 1000, data);
+            richTextBox1.Clear();
+            double[,,] res = nn.traning();
+
+            //print
+            for (int i = 0; i < br_epohi; i++) {
+                for (int j = 0; j < data.GetLength(0); j++) {
+                    for (int k = 0; k < data.GetLength(1); k++) {
+                        richTextBox1.AppendText(res[i, j, k].ToString() + " ");
+                    }
+                    richTextBox1.AppendText("\n----\n");
+                }
+                richTextBox1.AppendText(i + "**************\n");
+            }
 
 
-            Neural_Network nn = new Neural_Network();
+            Graph gr = new Graph(res);
+            gr.Show();
+
 
         }
 
+        private void button1_Click (object sender, EventArgs e) {
+            OpenFileDialog ofd = new OpenFileDialog();
+            Bitmap upload_img;
+            if (ofd.ShowDialog() == DialogResult.OK) {
+                upload_img = new Bitmap(ofd.FileName);
+                upload_img = convertToGray(upload_img);
+                fixXY();
+                int x = Int32.Parse(textBox1.Text);
+                int y = Int32.Parse(textBox2.Text);
+                List<double> list_upload_img = new List<double>();
+                AverageGray(upload_img, x, y);
+                list_upload_img = scaleAndShifting(AverageGray(upload_img, x, y));
+                richTextBox1.Clear();
+                foreach(double d in list_upload_img){
+                    richTextBox1.AppendText(d.ToString() + "\n");
+                }
+                double[] temp = nn.classifier(list_upload_img);
+                int[] res = toProcent(temp);
+
+                // pie chart
+                //utre si igraq
+                chart1.Series.Clear();
+                chart1.Series.Add("Series1");
+                chart1.Series["Series1"].Points.AddXY("ръководство", res[0]);
+                chart1.Series["Series1"].Points.AddXY("чиния", res[1]);
+                chart1.Series["Series1"].Points.AddXY("ст.книжка", res[2]);
+          
+                //pictureBox1.Image = upload_img;
+            }
+
+        }
+        private int[] toProcent (double[] data) {
+            int[] result = new int[data.Length];
+            double sum = 0.0;
+            for (int i = 0; i < data.Length; i++) {
+                sum += data[i];   
+            }
+            for (int i = 0; i < data.Length; i++) {
+                result[i] = (int)Math.Round(data[i] / sum);
+            }
+            return result;
+
+        }
     }
 }
