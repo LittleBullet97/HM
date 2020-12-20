@@ -42,6 +42,7 @@ namespace NM {
             List<int> avr_gray_value = new List<int>();
             avr_gray_value = AverageGray(img_gray, x, y);
             pixelization(avr_gray_value, img_gray, x, y);
+            scaleAndShifting(avr_gray_value);
 
         }
 
@@ -136,29 +137,31 @@ namespace NM {
 
             pictureBox3.Image = result;
         }
+        private void scaleAndShifting (List<int> avr_gray_value) {
+            int old_min_value = avr_gray_value.Min();
+            int old_max_value = avr_gray_value.Max();
+
+            double scale = ( 0.9 - 0.1 ) / ( old_max_value - old_min_value );
+            List<double> scaled_gray = new List<double>();
+
+            for (int i = 0; i < avr_gray_value.Count; i++) {
+                scaled_gray.Add(avr_gray_value[i] * scale);
+            }
+
+            double new_min_value = scaled_gray.Min();
+            double new_max_value = scaled_gray.Max();// not used
+            double shift = 0.1 - new_min_value;
+
+            for (int i = 0; i < scaled_gray.Count; i++) {
+                scaled_gray[i] = avr_gray_value[i] * scale + shift;
+                richTextBox1.AppendText(scaled_gray[i].ToString()+"\n");
+            }
+        }
 
         private void button4_Click (object sender, EventArgs e) {
             Multy ml = new Multy();
             this.Hide();
             ml.Show();
-        }
-
-        private void button5_Click (object sender, EventArgs e) {
-            int[,] test = new int[2, 3];
-            
-            for (int i = 0; i < 2; i++) {
-                for (int j = 0; j < 3; j++) {
-                    test[i, j] = (j + j * i)+1;
-                }
-            }
-            double sum = 0;
-            for (int i = 0; i < 2; i++) {
-                for (int j = 0; j < 3; j++) {
-                    sum += test[i, j];
-                }
-            }
-            double res = sum / 6;
-            MessageBox.Show(res.ToString());
         }
     }
 }

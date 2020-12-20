@@ -13,29 +13,37 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 
+
 namespace NM {
+    
     public partial class Multy : Form {
         public Multy () {
             InitializeComponent();
         }
 
         private void Form1_Load (object sender, EventArgs e) {
-            textBox3.Text = "";
-            textBox6.Text = 0.1.ToString();
-            textBox7.Text = 100.ToString();
+           
         }
 
         List<List<Bitmap>> pictures = new List<List<Bitmap>>();//3//35~40
-        string filename = @"D:\Desktop\values.xml";
+        string filename = "values.xml";
+        public string tranning_location = "";
         private void loadPictures () {
-            string[] all_folder_tranning = Directory.GetDirectories(@"D:\Desktop\training");
-            foreach (string folder_tranning in all_folder_tranning) {
-                string[] object_tranning = Directory.GetFiles(folder_tranning);
-                List<Bitmap> obj = new List<Bitmap>();
-                foreach (string file in object_tranning) {
-                    obj.Add(new Bitmap(file));
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK) {
+                tranning_location = fbd.SelectedPath;
+                System.IO.File.WriteAllText("last.txt", tranning_location);
+                string[] all_folder_tranning = Directory.GetDirectories(tranning_location);
+                foreach (string folder_tranning in all_folder_tranning) {
+                    string[] object_tranning = Directory.GetFiles(folder_tranning);
+                    List<Bitmap> obj = new List<Bitmap>();
+                    foreach (string file in object_tranning) {
+                        obj.Add(new Bitmap(file));
+                    }
+                    pictures.Add(obj);
                 }
-                pictures.Add(obj);
+            } else {
+                return;
             }
         }
     
@@ -89,7 +97,7 @@ namespace NM {
                 for (int x = 0; x < count_rectX; x++) {
                     int loc = x + y * count_rectX;
                     double temp = Math.Round(lists[loc].Average());
-                    richTextBox1.AppendText(temp.ToString() + "   ");
+                    //richTextBox1.AppendText(temp.ToString() + "   ");
                     result.Add((int) temp);
                 }
             }
@@ -108,7 +116,7 @@ namespace NM {
             }
 
             double new_min_value = scaled_gray.Min();
-            double new_max_value = scaled_gray.Max();
+            double new_max_value = scaled_gray.Max();// not used
             double shift = 0.1 - new_min_value;
 
             for (int i = 0; i < scaled_gray.Count; i++) {
@@ -143,7 +151,6 @@ namespace NM {
             }
             int temp = Int32.Parse(a) * Int32.Parse(b);
             textBox3.Text = temp.ToString();
-            textBox5.Text = temp.ToString();
        
         }
 
@@ -301,28 +308,24 @@ namespace NM {
             int br_epohi;
             double[,,] data = readXML();
 
-            int br_primeri = data.GetLength(1);
+            int br_primeri = data.GetLength(1) * 3;
+
             A = textBox3.Text == "" ? A = 9: A = Int32.Parse(textBox3.Text);
             B = (int)Math.Round(Math.Sqrt(br_primeri) + 2);
-           
+            C = 1;
             eta = textBox6.Text == "" ? eta = 0.1 : eta = Convert.ToDouble(textBox6.Text);
-            br_epohi = textBox7.Text == "" ? br_epohi = 1000 : br_epohi = Int32.Parse(textBox7.Text);  
+            br_epohi = textBox7.Text == "" ? br_epohi = 1000 : br_epohi = Int32.Parse(textBox7.Text);
 
-            nn = new Neural_Network(A, B, 1, eta, 1000, data);
+            textBox3.Text = A.ToString();
+            textBox4.Text = B.ToString();
+            textBox5.Text = C.ToString();
+            textBox6.Text = eta.ToString();
+            textBox7.Text = br_epohi.ToString();
+
+
+            nn = new Neural_Network(A, B, C, eta, br_epohi, data);
             richTextBox1.Clear();
             double[,,] res = nn.traning();
-
-            //print
-            for (int i = 0; i < br_epohi; i++) {
-                for (int j = 0; j < data.GetLength(0); j++) {
-                    for (int k = 0; k < data.GetLength(1); k++) {
-                        richTextBox1.AppendText(res[i, j, k].ToString() + " ");
-                    }
-                    richTextBox1.AppendText("\n----\n");
-                }
-                richTextBox1.AppendText(i + "**************\n");
-            }
-
 
             Graph gr = new Graph(res);
             gr.Show();
@@ -340,38 +343,30 @@ namespace NM {
                 int x = Int32.Parse(textBox1.Text);
                 int y = Int32.Parse(textBox2.Text);
                 List<double> list_upload_img = new List<double>();
-                AverageGray(upload_img, x, y);
                 list_upload_img = scaleAndShifting(AverageGray(upload_img, x, y));
                 richTextBox1.Clear();
                 foreach(double d in list_upload_img){
                     richTextBox1.AppendText(d.ToString() + "\n");
                 }
-                double[] temp = nn.classifier(list_upload_img);
-                int[] res = toProcent(temp);
 
-                // pie chart
-                //utre si igraq
-                chart1.Series.Clear();
-                chart1.Series.Add("Series1");
-                chart1.Series["Series1"].Points.AddXY("ръководство", res[0]);
-                chart1.Series["Series1"].Points.AddXY("чиния", res[1]);
-                chart1.Series["Series1"].Points.AddXY("ст.книжка", res[2]);
-          
-                //pictureBox1.Image = upload_img;
+                if (tranning_location == "") {
+                    if (!File.Exists("last.txt")) {
+                        MessageBox.Show("need to execution files");
+                        return;
+                    } else {
+                        tranning_location = System.IO.File.ReadAllText("last.txt");
+                    }
+
+                }
+
+                Dictionary<string,double> classy = nn.classifier(list_upload_img,tranning_location);
+                richTextBox2.Clear();
+                foreach (var c in classy) {
+                    richTextBox2.AppendText(c.Key + " " + c.Value +"%\n") ;
+                }
             }
 
         }
-        private int[] toProcent (double[] data) {
-            int[] result = new int[data.Length];
-            double sum = 0.0;
-            for (int i = 0; i < data.Length; i++) {
-                sum += data[i];   
-            }
-            for (int i = 0; i < data.Length; i++) {
-                result[i] = (int)Math.Round(data[i] / sum);
-            }
-            return result;
-
-        }
+        
     }
 }

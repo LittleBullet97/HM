@@ -1,25 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using System.Windows.Forms;
 
 
 
 namespace NM {
     public class Neural_Network : Form {
-        private int A;
-        private int B;
-        private int C;
-        private double eta;
-        private int br_epohi;
-        private double[] X;
-        private double[,,] data;
-        private double[,] Wji;
-        private double[,] Wkj;
-        private double[] Y_k;
-        private double curr_Y;
+        private int A; // брой входни неврони
+        private int B; // брой скрити неврони
+        private int C; // борй изходни неврони
+        private double eta; // обучаваща скорост
+        private int br_epohi; // брой епохи
+        private double[] X; //входове към невроната мрежа
+        private double[,,] data; // date set-a
+        private double[,] Wji; // теглата между входнити и скритите неврони
+        private double[,] Wkj; // теглата между сритите и изходните неврони
+        private double[] Y_k;  // желания резултат
+        private double curr_Y; // текущия желан резултат
 
 
 		public Neural_Network (int A, int B, int C, double eta, int br_epohi, double[,,] data) {
@@ -51,27 +49,20 @@ namespace NM {
                     this.Wkj[k, j] = n;
                 }
             }
+
+
         }
         public void initYk () {
-            //Random r = new Random();
-            //for (int k = 0; k < C; k++) {
-            //    double n = r.NextDouble() * 0.8 + 0.1;
-            //    Y_k[k] = n;
-            //}
             Y_k[0] = 0.1;
             Y_k[1] = 0.45;
             Y_k[2] = 0.9;
-
         }
         public void initCurrentX (int papka,int snimka) {
             for (int k = 0; k < data.GetLength(2); k++) {
                 this.X[k] = data[papka, snimka,k];
-                if (X[k] == -1) MessageBox.Show("ima :(");
             }
-        }  
-        //public void initCurrentY (int index) {
-        //    curr_Y = Y_k[index];
-        //}
+        }
+        // feedForward
         public double[] netj () {
             double[] result = new double[B];
             for (int j = 0; j < B; j++) {
@@ -111,7 +102,9 @@ namespace NM {
             return result;
 
         }
+        // end feedForward
 
+        //backpropagation
         public double[] deltak () {
             double[] result = new double[C];
             double[] O_k = Ok();
@@ -147,7 +140,7 @@ namespace NM {
             }
 
             for (int j = 0; j < B; j++) {
-                result[j] = h_j[j] * ( 1 - h_j[j]) * sum[j];
+                result[j] = h_j[j] * ( 1.0 - h_j[j]) * sum[j];
             }
             return result;
         }
@@ -182,7 +175,7 @@ namespace NM {
             double result = 0.0;
             double[] O_k = Ok();
             for (int k = 0; k < C; k++) {
-                result += 0.5 * (Math.Pow(( curr_Y - O_k[k] ),2));
+                result += 0.5 * Math.Pow(curr_Y - O_k[k] ,2);
             }
             return result;
         }
@@ -203,12 +196,12 @@ namespace NM {
             }
             return res;
         }
-        public double[] classifier (List<double> list) {
+        public Dictionary<string,double> classifier (List<double> list,string loc) {
             double[] netj = new double[B];
             double[] h = new double[B];
             double[] netk = new double[C];
             double[] Ok = new double[C];
-            double[] res = new double[3];
+           
             for (int j = 0; j < B; j++) {
                 for (int i = 0; i < A; i++) {
                     netj[j] += list[i] * Wji[j, i];
@@ -216,7 +209,7 @@ namespace NM {
             }
 
             for (int j = 0; j < B; j++) {
-                h[j] = 1.0 / ( 1.0 + Math.Pow(Math.E, -netj[j]));
+                h[j] = 1.0 / ( 1.0 + Math.Pow(Math.E, -netj[j]) );
             }
 
             for (int k = 0; k < C; k++) {
@@ -225,41 +218,43 @@ namespace NM {
                 }
             }
 
-            for(int k = 0; k < C; k++) {
-                Ok[k] = 1.0 / ( 1.0 + Math.Pow(Math.E, -netk[k]));
+            for (int k = 0; k < C; k++) {
+                Ok[k] = 1.0 / ( 1.0 + Math.Pow(Math.E, -netk[k]) );
             }
 
-            double min = 10;
-            int min_index = 0;
-            for (int i = 0; i < 3; i++) {
-                double temp = Math.Abs(Ok[0] - Y_k[i]);
-                res[i] = temp;
-                Console.Out.WriteLine(Ok[0] + " " + Y_k[i]);
-                Console.Out.WriteLine(temp);
-                if (temp < min) {
-                    min = temp;
-                    min_index = i;
-                }    
+            Dictionary<string, double> result = new Dictionary<string, double>();
+            
+            string[] name_folders = Directory.GetDirectories(loc);
+            double[] procent = new double[data.GetLength(0)];
+            Console.WriteLine("--");
+            for (int i = 0; i < procent.Length; i++) {
+                procent[i] = Math.Abs(Y_k[i] - Ok[0]);
+                Console.WriteLine(procent[i]);
             }
-            Console.Out.WriteLine(min_index + " " + min);
-            Console.Out.WriteLine("----------------");
-            return res;
+            Console.WriteLine("--");
+            procent = toProcent(procent);
+            for (int i = 0; i < data.GetLength(0); i++) { 
+                string papka_ime = new DirectoryInfo(name_folders[i]).Name;
+                double papka_val = 100.0 - procent[i];
+                result.Add(papka_ime, papka_val);
+            }
+            return result;
             
         }
-
-        private void InitializeComponent () {
-            this.SuspendLayout();
-            // 
-            // Neural_Network
-            // 
-            this.ClientSize = new System.Drawing.Size(282, 253);
-            this.Name = "Neural_Network";
-            this.Load += new System.EventHandler(this.Neural_Network_Load);
-            this.ResumeLayout(false);
-
-        }
-
-        private void Neural_Network_Load (object sender, EventArgs e) {
+        private double[] toProcent (double[] data) {
+            double[] result = new double[data.Length];
+            double sum = 0.0;
+            for (int i = 0; i < data.Length; i++) {
+                sum += data[i];
+            }
+            Console.Out.WriteLine(sum);
+            for (int i = 0; i < data.Length; i++) {
+                result[i] = data[i] / sum;
+                result[i] *= 100;
+                result[i] = Math.Round(result[i], 2);
+                Console.Out.WriteLine(result[i]);
+            }
+            return result;
 
         }
     }

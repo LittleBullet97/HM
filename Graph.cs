@@ -47,8 +47,5 @@ namespace NM {
             cartesianChart1.Series = series;           
         }
 
-        private void cartesianChart1_ChildChanged (object sender, System.Windows.Forms.Integration.ChildChangedEventArgs e) {
-
-        }
     }
 }

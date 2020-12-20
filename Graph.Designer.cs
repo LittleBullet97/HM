@@ -38,7 +38,6 @@ namespace NM {
             this.cartesianChart1.Size = new System.Drawing.Size(740, 416);
             this.cartesianChart1.TabIndex = 0;
             this.cartesianChart1.Text = "cartesianChart1";
-            this.cartesianChart1.ChildChanged += new System.EventHandler<System.Windows.Forms.Integration.ChildChangedEventArgs>(this.cartesianChart1_ChildChanged);
             // 
             // Graph
             // 
